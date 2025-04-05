@@ -13,7 +13,7 @@ A smart enumeration tool for CTFs and Active Directory labs.
 
 ```bash
 python3 ctf_scan.py --ip 10.10.10.134 --name bastion
-
+```
 
 ---
 
