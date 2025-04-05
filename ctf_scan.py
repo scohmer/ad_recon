@@ -154,16 +154,16 @@ def run_nmap_detailed(ip, ports, machine_name, loot_path, skip_hosts_prompt=Fals
 def auto_recon(ip, ports, machine_name, loot_path):
     if 445 in ports:
         run_command_capture(f"enum4linux-ng -A {ip}", "enum4linux-ng", machine_name, loot_path)
-        run_command_capture(f"crackmapexec smb {ip}", "cme_smb", machine_name, loot_path)
+        run_command_capture(f"nxc smb {ip}", "nxc_smb", machine_name, loot_path)
     if any(p in ports for p in [389, 636, 3268]):
         run_command_capture(f"ldapsearch -x -H ldap://{ip} -s base", "ldapsearch", machine_name, loot_path)
-        run_command_capture(f"crackmapexec ldap {ip}", "cme_ldap", machine_name, loot_path)
+        run_command_capture(f"nxc ldap {ip}", "nxc_ldap", machine_name, loot_path)
     if 88 in ports:
         run_command_capture(f"impacket-GetUserSPNs -request -dc-ip {ip} -no-pass EXAMPLE.COM/", "impacket_spns", machine_name, loot_path)
     if 3389 in ports:
-        run_command_capture(f"crackmapexec rdp {ip}", "cme_rdp", machine_name, loot_path)
+        run_command_capture(f"nxc rdp {ip}", "nxc_rdp", machine_name, loot_path)
     if 5985 in ports:
-        run_command_capture(f"crackmapexec winrm {ip}", "cme_winrm", machine_name, loot_path)
+        run_command_capture(f"nxc winrm {ip}", "nxc_winrm", machine_name, loot_path)
 
 def main():
     parser = argparse.ArgumentParser(description="CTF Recon Toolkit")
@@ -192,3 +192,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
