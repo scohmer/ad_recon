@@ -116,14 +116,14 @@ def get_nse_scripts_for_ports(ports):
     return sorted(scripts)
 
 def run_nmap_detailed(ip, ports, machine_name, loot_path, skip_hosts_prompt=False):
+    scanner = nmap.PortScanner()
     scripts = get_nse_scripts_for_ports(ports)
     port_str = ",".join(str(p) for p in ports)
-    script_str = f"--script={','.join(scripts)}" if scripts else ""
-    args = f"-sS -sV -sC -T4 --min-rate 5000 --max-retries 1 -Pn {script_str}"
+#   script_str = f"--script={','.join(scripts)}" if scripts else ""
+#   args = f"-sS -sV -sC --min-rate=5000 -Pn {script_str}"
+    args = f"-sS -sV -sC --min-rate=5000 -Pn"
 
     print(f"[+] Running detailed scan on ports: {port_str}")
-    scanner = nmap.PortScanner()
-
     try:
         scanner.scan(hosts=ip, ports=port_str, arguments=args)
     except Exception as e:
@@ -132,8 +132,7 @@ def run_nmap_detailed(ip, ports, machine_name, loot_path, skip_hosts_prompt=Fals
 
     if ip not in scanner.all_hosts():
         print(f"[!] No scan results returned for {ip}. The host might be up but all scanned ports are filtered or closed.")
-        return save_loot(machine_name, loot_path, "nmap_detailed.txt",
-                         f"[!] No scan data returned for {ip}.\nTry using a slower scan or verify port accessibility.")
+        return save_loot(machine_name, loot_path, "nmap_detailed.txt", f"[!] No scan data returned for {ip}.\nTry using a slower scan or verify port accessibility.")
 
     hostname = scanner[ip].hostname()
     if hostname:
@@ -147,9 +146,7 @@ def run_nmap_detailed(ip, ports, machine_name, loot_path, skip_hosts_prompt=Fals
             output.append(f"Protocol: {proto}")
             for port in sorted(scanner[host][proto].keys()):
                 s = scanner[host][proto][port]
-                output.append(
-                    f"  Port {port}: {s['state']} {s['name']} {s.get('product', '')} {s.get('version', '')}"
-                )
+                output.append(f"  Port {port}: {s['state']} {s['name']} {s.get('product', '')} {s.get('version', '')}")
 
     return save_loot(machine_name, loot_path, "nmap_detailed.txt", "\n".join(output))
 
