@@ -6,6 +6,8 @@ import nmap
 import subprocess
 from pathlib import Path
 from datetime import datetime
+import traceback
+from math import ceil
 
 PORT_NSE_SCRIPTS = {
     53: ['dns-zone-transfer', 'dns-recursion'],
@@ -98,9 +100,9 @@ def run_nmap_full(ip, udp=False):
     print(f"[+] Running full {'UDP' if udp else 'TCP'} scan on {ip}...")
     scanner = nmap.PortScanner()
     if udp:
-        scanner.scan(hosts=ip, arguments='-sU --top-ports 50 -T4 --min-rate 5000 -Pn --max-retries 1 --host-timeout 2m')
+        scanner.scan(hosts=ip, arguments='-sU --top-ports 50 --min-rate 5000 -Pn')
     else:
-        scanner.scan(hosts=ip, arguments='-p- -sS -T4 --min-rate 5000 -Pn --max-retries 1 --host-timeout 2m')
+        scanner.scan(hosts=ip, arguments='-p- --min-rate 5000 -Pn')
     open_ports = []
     if ip in scanner.all_hosts():
         for proto in scanner[ip].all_protocols():
@@ -178,17 +180,29 @@ def main():
 
     if args.refresh or not config.get("ports"):
         config["ports"] = run_nmap_full(config["ip"])
+    if not config["ports"]:
+        print(f"[!] No open TCP ports discovered on {config['ip']}. Exiting.")
+        return
         save_config(config, config_file)
     else:
         print("[+] Using cached TCP ports.")
 
-    run_nmap_detailed(config["ip"], config["ports"], config["machine_name"], loot_path, skip_hosts_prompt=args.no_hosts)
+    try:
+        run_nmap_detailed(config["ip"], config["ports"], config["machine_name"], loot_path, skip_hosts_prompt=args.no_hosts)
+    except Exception as e:
+        print(f"[!] Detailed scan failed: {e}")
 
-    if args.udp:
-        udp_ports = run_nmap_full(config["ip"], udp=True)
-        save_loot(config["machine_name"], loot_path, "udp_ports.txt", "\n".join(map(str, udp_ports)))
+    try:
+        if args.udp:
+            udp_ports = run_nmap_full(config["ip"], udp=True)
+            save_loot(config["machine_name"], loot_path, "udp_ports.txt", "\n".join(map(str, udp_ports)))
+    except Exception as e:
+        print(f"[!] UDP scan failed: {e}")
 
-    auto_recon(config["ip"], config["ports"], config["machine_name"], loot_path)
+    try:
+        auto_recon(config["ip"], config["ports"], config["machine_name"], loot_path)
+    except Exception as e:
+        print(f"[!] Auto recon failed: {e}")
 
 if __name__ == "__main__":
     main()
